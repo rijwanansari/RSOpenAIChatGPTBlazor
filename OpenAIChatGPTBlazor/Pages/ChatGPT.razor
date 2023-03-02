@@ -1,0 +1,78 @@
+﻿@page "/chatgpt"
+@using OpenAIChatGPTBlazor.Services;
+@using OpenAIChatGPTBlazor.Services.Dto;
+@inject IOpenAIHelperService openAIHelperService
+
+<PageTitle>Let's ChatGPT'</PageTitle>
+
+<h4>Welcome to Rijsat Q&A using OpenAI</h4>
+@if (warninngMessage.Length > 0)
+{
+    <div class="alert alert-warning">
+        <strong>Warning!</strong> @warninngMessage.
+    </div>
+}
+<div class="row">
+    <div class="col-sm-10">
+        <input type="text" class="form-control" placeholder="Ask me Anything" @bind="searchText" />
+    </div>
+    <div class="col-sm-2">
+        <button class="btn btn-danger" @onclick="OnSearchClick">
+            <i class="fas fa-times"></i>Ask Me!
+        </button>
+    </div>
+</div>
+@if (loading)
+{
+    <br />
+    <div class="loader"></div>
+    <p>OpenAPI is looking for your queries... please wait.</p>
+}
+@if (responseText.Length > 0)
+{
+    <div class="row">
+        <h4>Answer</h4>
+        <p>
+            @responseText
+        </p>
+        @if (responseModel != null)
+        {
+            <p>Token Used: @responseModel.Usage?.TotalTokens</p>
+        }
+    </div>
+
+}
+
+@code {
+    private string warninngMessage = "";
+    private string searchText = "";
+    private CompletionResponseDto responseModel = new();
+    private string responseText = "";
+    private bool loading = false;
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+    public async void OnSearchClick()
+    {
+        try
+        {
+            if (searchText.Length == 0)
+            {
+                warninngMessage = "Please ask me something!!";
+                return;
+            }
+            loading = true;
+            responseModel = await openAIHelperService.GetHttpResponseAsync(searchText);
+            loading = false;
+            if (responseModel != null)
+                responseText = responseModel.Choices?[0]?.Text;
+
+        }
+        catch (Exception ex)
+        {
+            warninngMessage = ex.Message;
+        }
+        loading = false;
+    }
+}
